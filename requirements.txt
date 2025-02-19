@@ -3,3 +3,5 @@ sqlalchemy==2.0.38
 ### Drivers
 # PostgreSQL
 psycopg==3.2.4
+
+graphviz==0.20.3
