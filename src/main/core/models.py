@@ -5,6 +5,11 @@ from dataclasses import dataclass
 @dataclass
 class Column:
     name: str
+    type: str
+    is_primary_key: bool = False
+    is_foreign_key: bool = False
+    is_unique: bool = False
+    is_nullable: bool = True
 
 
 @dataclass
