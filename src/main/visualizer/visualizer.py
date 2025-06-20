@@ -3,7 +3,7 @@ from typing import List
 from graphviz import Digraph
 
 from src.main.core import DatabaseSchemaVisualizer, Table, Relation
-from src.main.visualizer import fill_and_get_table_html_skeleton
+from src.main.visualizer import build_html_table
 
 
 class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
@@ -12,6 +12,8 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
         self.schema = Digraph()
         self.schema.attr("node", shape="plain")
         self.schema.attr(rankdir="LR")
+        self.schema.attr(nodesep="0.5")
+        self.schema.attr(ranksep="0.8")
 
         self.tables = tables
 
@@ -19,13 +21,13 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
         self.__create_nodes()
         self.__create_edges_between_all_nodes()
 
-        self.schema.render(filename='erd', format='png')
+        self.schema.render(filename='erd', format='svg')
 
     def __create_nodes(self) -> None:
         for table in self.tables:
             self.schema.node(
                 name=table.name,
-                label=fill_and_get_table_html_skeleton(table)
+                label="<" + build_html_table(table) + ">"
             )
 
     def __create_edges_between_all_nodes(self) -> None:
@@ -36,5 +38,5 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
         for relation in relations:
             self.schema.edge(
                 tail_name=f"{relation.parent_table_name}:{relation.parent_column_name}",
-                head_name=f"{relation.related_table_name}:{relation.related_column_name}",
+                head_name=f"{relation.related_table_name}:{relation.related_column_name}"
             )
