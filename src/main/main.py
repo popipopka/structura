@@ -167,15 +167,14 @@ def main(page: ft.Page):
 
         # --- Connection History Cards ---
         def delete_history(connection_uuid):
-            # Find and remove connection by UUID
             connection_history[:] = [h for h in connection_history if h.get('uuid') != connection_uuid]
             save_connection_history(connection_history)
             go_to_screen(db_choice_screen())
 
         def quick_connect(h):
             nonlocal current_db_url
-            # Используем диалект из истории или по умолчанию PostgreSQL
-            dialect: Dialect = h.get('dialect', Dialect.POSTGRESQL)
+
+            dialect: Dialect = h.get('dialect')
             current_db_url = DatabaseURL(
                 dialect, h['user'], h['password'], h['host'], h['port'], h['database']
             )
@@ -211,7 +210,7 @@ def main(page: ft.Page):
                 ft.Container(
                     ft.Divider(height=2, thickness=2, color=ft.Colors.GREY_300),
                     padding=ft.padding.symmetric(vertical=20),
-                    expand=True
+                    expand_loose=True
                 ),
                 ft.Container(
                     ft.Text("Прошлые подключения:", size=18, weight=ft.FontWeight.BOLD),
@@ -231,13 +230,13 @@ def main(page: ft.Page):
     def connection_input_screen(dialect):
         card_width = 400
         field_height = 44
-        host = ft.TextField(label="Host", value="localhost", height=field_height, width=card_width * 0.65)
-        port = ft.TextField(label="Port", value="5432", height=field_height, expand=True)
-        user = ft.TextField(label="User", value="postgres", height=field_height, width=card_width)
-        password = ft.TextField(label="Password", password=True, can_reveal_password=True, height=field_height,
+        host = ft.TextField(label="Хост", value="localhost", height=field_height, width=card_width * 0.65)
+        port = ft.TextField(label="Порт", value="5432", height=field_height, expand=True)
+        user = ft.TextField(label="Пользователь", value=dialect.value, height=field_height, width=card_width)
+        password = ft.TextField(label="Пароль", password=True, can_reveal_password=True, height=field_height,
                                 width=card_width)
-        database = ft.TextField(label="Database", height=field_height, width=card_width)
-        error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER)
+        database = ft.TextField(label="База данных", height=field_height, width=card_width)
+        error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER, max_lines=8)
 
         def on_accept(e):
             if not all([host.value, port.value, user.value, password.value, database.value]):
@@ -261,9 +260,9 @@ def main(page: ft.Page):
                     database=database.value,
                     dialect=dialect
                 )
-                if h not in connection_history:
-                    connection_history.append(h)
-                    save_connection_history(connection_history)
+
+                connection_history.append(h)
+                save_connection_history(connection_history)
 
                 nonlocal current_db_url
                 current_db_url = db_url
@@ -297,7 +296,7 @@ def main(page: ft.Page):
                             spacing=12),
                         padding=28,
                         width=card_width,
-                        height=420,
+                        # height=420,
                         alignment=ft.alignment.center,
                     ),
                     # elevation=6,
@@ -358,18 +357,23 @@ def main(page: ft.Page):
                 ft.Container(
                     ft.Column(
                         [
-                            ft.Container(
-                                svg_view,
-                                alignment=ft.alignment.center,
-                                expand=True
-                            )
+                            ft.Row(
+                                [
+                                    ft.Container(
+                                        svg_view,
+                                        alignment=ft.alignment.center,
+                                        expand=True
+                                    )
+                                ],
+                                scroll=ft.ScrollMode.AUTO,
+                            ),
                         ],
-                        scroll=ft.ScrollMode.AUTO
+                        scroll=ft.ScrollMode.AUTO,
                     ),
+                    alignment=ft.alignment.center,
                     expand=True
                 ),
-            ],
-            can_pop=True
+            ]
         )
 
     # Запуск с первого экрана
