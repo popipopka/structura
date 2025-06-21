@@ -32,7 +32,6 @@ class DatabaseCard(ft.Container):
         )
         self._on_select = on_select
         self._dialect = dialect
-        self._hovered = False
 
     def _on_click(self, e):
         if self._on_select:
@@ -40,35 +39,45 @@ class DatabaseCard(ft.Container):
 
 
 class ConnectionHistoryCard(ft.Container):
-    def __init__(self, history, on_delete, on_select):
+    def __init__(self, history, on_delete, on_select, on_edit):
         dialect = history.get('dialect')
         dialect_name = dialect.value.upper()
-
         super().__init__(
-            content=ft.Column(
-                [
-                    ft.Row(
-                        [
-                            ft.Text(dialect_name, size=14, weight=ft.FontWeight.BOLD),
-                            ft.IconButton(
-                                ft.Icons.DELETE,
-                                icon_color=ft.Colors.RED,
-                                icon_size=28,
-                                tooltip="Удалить",
-                                on_click=lambda e: on_delete(history.get('uuid'))
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                    ),
-                    ft.Text(history['database'], size=16, color=ft.Colors.BLUE),
-                    ft.Text(f"{history['host']}:{history['port']}", size=12, color=ft.Colors.GREY),
-                ],
-                spacing=3
-            ),
+            content=ft.Row([
+                ft.Column(
+                    [
+                        ft.Text(dialect_name, size=14, weight=ft.FontWeight.BOLD),
+                        ft.Text(history['database'], size=16, color=ft.Colors.BLUE),
+                        ft.Text(f"{history['host']}:{history['port']}", size=12, color=ft.Colors.GREY),
+                        ft.Text(history['user'], size=12, color=ft.Colors.GREY),
+                    ],
+                    spacing=4,
+                    expand=True
+                ),
+
+                ft.Column(
+                    [
+                        ft.IconButton(
+                            ft.Icons.EDIT,
+                            icon_color=ft.Colors.PRIMARY,
+                            icon_size=28,
+                            tooltip="Изменить",
+                            on_click=lambda e: on_edit(history)
+                        ),
+                        ft.IconButton(
+                            ft.Icons.DELETE,
+                            icon_color=ft.Colors.RED,
+                            icon_size=28,
+                            tooltip="Удалить",
+                            on_click=lambda e: on_delete(history.get('uuid'))
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=4
+                )
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             padding=16,
-            width=200,
-            height=100,
-            border=ft.border.all(2, ft.Colors.OUTLINE),
+            border=ft.border.all(1, ft.Colors.OUTLINE),
             border_radius=12,
             bgcolor=ft.Colors.SURFACE,
             shadow=ft.BoxShadow(blur_radius=2, color=ft.Colors.SHADOW, offset=ft.Offset(0, 2)),
@@ -76,11 +85,10 @@ class ConnectionHistoryCard(ft.Container):
             on_click=lambda e: on_select(history),
         )
         self._on_select = on_select
-        self._hovered = False
 
     def _on_click(self, e):
         if self._on_select:
-            self._on_select(self.content.controls[2].value)  # Передаем базу данных (или можно всю history)
+            self._on_select(self.content.controls[0].value)
 
 
 # --- Storage and Logic ---
@@ -192,7 +200,8 @@ def main(page: ft.Page):
             ConnectionHistoryCard(
                 history=h,
                 on_delete=delete_history,
-                on_select=quick_connect
+                on_select=quick_connect,
+                on_edit=lambda h: go_to_screen(connection_edit_screen(h))
             ) for h in connection_history
         ]
 
@@ -407,6 +416,79 @@ def main(page: ft.Page):
                     alignment=ft.alignment.center,
                     expand=True
                 ),
+            ]
+        )
+
+    # --- Screen 4: Connection Edit ---
+    def connection_edit_screen(history):
+        card_width = 400
+        field_height = 44
+        host = ft.TextField(label="Хост", value=history['host'], height=field_height, width=card_width * 0.65)
+        port = ft.TextField(label="Порт", value=str(history['port']), height=field_height, expand=True)
+        user = ft.TextField(label="Пользователь", value=history['user'], height=field_height, width=card_width)
+        password = ft.TextField(label="Пароль", value=history['password'], password=True, can_reveal_password=True,
+                                height=field_height, width=card_width)
+        database = ft.TextField(label="База данных", value=history['database'], height=field_height, width=card_width)
+        error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER, max_lines=8)
+
+        def on_accept(e):
+            if not all([host.value, port.value, user.value, password.value, database.value]):
+                error_text.value = "Все поля должны быть заполнены!"
+                page.update()
+                return
+            try:
+                db_url = DatabaseURL(history['dialect'], user.value, password.value, host.value, int(port.value),
+                                     database.value)
+                conn = Connection(db_url)
+                conn.get_engine().connect().close()
+
+                for h in connection_history:
+                    if h.get('uuid') == history.get('uuid'):
+                        h.update({
+                            'user': user.value,
+                            'password': password.value,
+                            'host': host.value,
+                            'port': int(port.value),
+                            'database': database.value,
+                            'dialect': history['dialect']
+                        })
+                        break
+                save_connection_history(connection_history)
+                go_to_screen(db_choice_screen())
+            except Exception as ex:
+                error_text.value = f"Ошибка подключения: {ex}"
+                page.update()
+
+        return ft.View(
+            "/connection_edit",
+            [
+                ft.Container(
+                    content=ft.Container(
+                        ft.Column([
+                            ft.Text("Изменить данные для подключения", size=20, weight=ft.FontWeight.BOLD,
+                                    text_align=ft.TextAlign.CENTER),
+                            ft.Row([
+                                host,
+                                port
+                            ], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+                            user,
+                            password,
+                            database,
+                            error_text,
+                            ft.Row([
+                                ft.OutlinedButton("Отмена", on_click=lambda e: go_to_screen(db_choice_screen()),
+                                                  expand=True, height=field_height),
+                                ft.FilledButton("Принять", on_click=on_accept, expand=True, height=field_height),
+                            ], spacing=8),
+                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER,
+                            spacing=12),
+                        padding=28,
+                        width=card_width,
+                        alignment=ft.alignment.center,
+                    ),
+                    alignment=ft.alignment.center,
+                    expand=True
+                )
             ]
         )
 
