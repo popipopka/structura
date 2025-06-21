@@ -1,9 +1,10 @@
 import json
 import os
-import uuid
 import re
+import uuid
 
 import flet as ft
+from flet.core.types import AppView
 
 from src.main.persistence import DatabaseURL, Dialect, Connection
 from src.main.persistence.inspector import DatabaseSchemaInspectorAdapter
@@ -40,33 +41,30 @@ class DatabaseCard(ft.Container):
 
 class ConnectionHistoryCard(ft.Container):
     def __init__(self, history, on_delete, on_select):
-        # Get dialect name for display
-        dialect = history.get('dialect', Dialect.POSTGRESQL)
-        if hasattr(dialect, 'name'):
-            dialect_name = dialect.name
-        elif hasattr(dialect, 'value'):
-            dialect_name = dialect.value.upper()
-        else:
-            dialect_name = 'Unknown'  # fallback
+        dialect = history.get('dialect')
+        dialect_name = dialect.value.upper()
 
         super().__init__(
-            content=ft.Column([
-                ft.Row(
-                    [
-                        ft.Text(dialect_name, size=14, weight=ft.FontWeight.BOLD),
-                        ft.IconButton(
-                            ft.Icons.DELETE,
-                            icon_color=ft.Colors.RED,
-                            icon_size=28,
-                            tooltip="Удалить",
-                            on_click=lambda e: on_delete(history.get('uuid'))
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                ),
-                ft.Text(f"{history['host']}:{history['port']}", size=14, color=ft.Colors.GREY),
-                ft.Text(history['database'], size=15, color=ft.Colors.BLUE),
-            ], spacing=3),
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Text(dialect_name, size=14, weight=ft.FontWeight.BOLD),
+                            ft.IconButton(
+                                ft.Icons.DELETE,
+                                icon_color=ft.Colors.RED,
+                                icon_size=28,
+                                tooltip="Удалить",
+                                on_click=lambda e: on_delete(history.get('uuid'))
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                    ),
+                    ft.Text(history['database'], size=16, color=ft.Colors.BLUE),
+                    ft.Text(f"{history['host']}:{history['port']}", size=12, color=ft.Colors.GREY),
+                ],
+                spacing=3
+            ),
             padding=16,
             width=200,
             height=100,
@@ -160,6 +158,16 @@ def main(page: ft.Page):
             DatabaseCard(
                 name=Dialect.POSTGRESQL.value.upper(),
                 dialect=Dialect.POSTGRESQL,
+                on_select=lambda dialect: go_to_screen(connection_input_screen(dialect))
+            ),
+            DatabaseCard(
+                name=Dialect.MARIADB.value.upper(),
+                dialect=Dialect.MARIADB,
+                on_select=lambda dialect: go_to_screen(connection_input_screen(dialect))
+            ),
+            DatabaseCard(
+                name=Dialect.MYSQL.value.upper(),
+                dialect=Dialect.MYSQL,
                 on_select=lambda dialect: go_to_screen(connection_input_screen(dialect))
             )
         ]
@@ -341,11 +349,37 @@ def main(page: ft.Page):
                 svg_view.height = int(base_height * current_scale)
                 page.update()
 
-        toolbar = ft.Row([
-            ft.IconButton(ft.Icons.ARROW_BACK, tooltip="Назад", on_click=lambda e: go_to_screen(db_choice_screen())),
-            ft.IconButton(ft.Icons.REMOVE, tooltip="Уменьшить", on_click=zoom_out),
-            ft.IconButton(ft.Icons.ADD, tooltip="Увеличить", on_click=zoom_in),
-        ], alignment=ft.MainAxisAlignment.CENTER)
+        def reset_view(e):
+            nonlocal current_scale
+            current_scale = 1.0
+            svg_view.width = int(base_width * current_scale)
+            svg_view.height = int(base_height * current_scale)
+            page.update()
+
+        toolbar = ft.Row(
+            [
+                ft.TextButton(
+                    "Назад",
+                    icon=ft.Icons.ARROW_BACK,
+                    on_click=lambda e: go_to_screen(db_choice_screen()),
+                    style=ft.ButtonStyle(
+                        padding=ft.padding.symmetric(horizontal=16, vertical=8)
+                    )
+                ),
+                ft.Row(
+                    [
+                        ft.IconButton(ft.Icons.REMOVE, tooltip="Уменьшить", on_click=zoom_out),
+                        ft.IconButton(ft.Icons.ADD, tooltip="Увеличить", on_click=zoom_in),
+                        ft.IconButton(ft.Icons.REFRESH, tooltip="Сбросить", on_click=reset_view),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=8
+                ),
+                ft.Container(width=80)
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
         return ft.View(
             "/erd",
@@ -381,4 +415,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main, view=AppView.FLET_APP_WEB)

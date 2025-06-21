@@ -11,8 +11,8 @@ class DatabaseSchemaInspectorAdapter(DatabaseSchemaOutputPort):
     def __init__(self, connection: Connection):
         self.inspector = inspect(connection.engine)
 
-    def get_tables(self, schema: str | None = "public") -> List[Table]:
-        table_names = self.__get_table_names(schema)
+    def get_tables(self) -> List[Table]:
+        table_names = self.__get_table_names()
 
         tables = []
         for table_name in table_names:
@@ -27,8 +27,8 @@ class DatabaseSchemaInspectorAdapter(DatabaseSchemaOutputPort):
 
         return tables
 
-    def __get_table_names(self, schema: str) -> List[str]:
-        return self.inspector.get_table_names(schema)
+    def __get_table_names(self) -> List[str]:
+        return self.inspector.get_table_names()
 
     def __get_all_columns(self, table_name: str) -> List[Column]:
         reflected_columns = self.inspector.get_columns(table_name)
