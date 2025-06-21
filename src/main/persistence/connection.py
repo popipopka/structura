@@ -6,6 +6,10 @@ from sqlalchemy import create_engine, Engine
 class Dialect(enum.Enum):
     POSTGRESQL = "postgresql"
 
+    @staticmethod
+    def from_value(value: str) -> "Dialect":
+        return Dialect(value)
+
 
 class Driver(enum.Enum):
     PSYCOPG2 = "psycopg"
