@@ -1,2 +1,2 @@
-from .skeletons import build_html_table
+from .html_builder import build_table
 from .visualizer import GraphvizDatabaseSchemaVisualizer

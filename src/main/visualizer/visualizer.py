@@ -3,7 +3,7 @@ from typing import List
 from graphviz import Digraph
 
 from src.main.core import DatabaseSchemaVisualizer, Table, Relation
-from src.main.visualizer import build_html_table
+from src.main.visualizer import build_table
 
 
 class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
@@ -27,7 +27,7 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
         for table in self.tables:
             self.schema.node(
                 name=table.name,
-                label="<" + build_html_table(table) + ">"
+                label="<" + build_table(table) + ">"
             )
 
     def __create_edges_between_all_nodes(self) -> None:
