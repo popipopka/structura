@@ -17,10 +17,12 @@ def app(page: ft.Page):
     connection_history = load_connection_history()
     current_db_url = None
     svg_data = None
+    error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER, max_lines=8)
 
     def go_to_screen(screen):
         page.views.clear()
         page.views.append(screen)
+        error_text.value = ""
         page.update()
 
     # --- Экран 1: Стартовый экран ---
@@ -51,12 +53,18 @@ def app(page: ft.Page):
 
         def quick_connect(h):
             nonlocal current_db_url
-
-            dialect: Dialect = h.get('dialect')
-            current_db_url = DatabaseURL(
-                dialect, h['user'], h['password'], h['host'], h['port'], h['database']
-            )
-            go_to_screen(erd_screen())
+            try:
+                dialect: Dialect = h.get('dialect')
+                current_db_url = DatabaseURL(
+                    dialect, h['user'], h['password'], h['host'], h['port'], h['database']
+                )
+                conn = Connection(current_db_url)
+                conn.get_engine().connect().close()
+                error_text.value = ""
+                go_to_screen(erd_screen())
+            except Exception as ex:
+                error_text.value = f"Ошибка подключения: {ex}"
+                page.update()
 
         history_cards = [
             ConnectionHistoryCard(
@@ -100,6 +108,10 @@ def app(page: ft.Page):
                     alignment=ft.alignment.top_center,
                     padding=ft.padding.only(left=40, right=40, bottom=10),
                     expand=True
+                ),
+                ft.Container(
+                    error_text,
+                    alignment=ft.alignment.center,
                 )
             ]
         )
@@ -114,7 +126,6 @@ def app(page: ft.Page):
         password = ft.TextField(label="Пароль", password=True, can_reveal_password=True, height=field_height,
                                 width=card_width)
         database = ft.TextField(label="База данных", height=field_height, width=card_width)
-        error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER, max_lines=8)
 
         def on_accept(e):
             if not all([host.value, port.value, user.value, password.value, database.value]):
@@ -154,33 +165,40 @@ def app(page: ft.Page):
             [
                 ft.Container(
                     content=ft.Container(
-                        ft.Column([
-                            ft.Text("Введите данные для подключения", size=20, weight=ft.FontWeight.BOLD,
-                                    text_align=ft.TextAlign.CENTER),
-                            ft.Row([
-                                host,
-                                port
-                            ], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
-                            user,
-                            password,
-                            database,
-                            error_text,
-                            ft.Row([
-                                ft.OutlinedButton("Назад", on_click=lambda e: go_to_screen(db_choice_screen()),
-                                                  expand=True, height=field_height),
-                                ft.FilledButton("Принять", on_click=on_accept, expand=True, height=field_height),
-                            ], spacing=8),
-                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=12),
+                        ft.Column(
+                            [
+                                ft.Text("Введите данные для подключения", size=20, weight=ft.FontWeight.BOLD,
+                                        text_align=ft.TextAlign.CENTER),
+                                ft.Row(
+                                    [
+                                        host,
+                                        port
+                                    ],
+                                    spacing=8,
+                                    alignment=ft.MainAxisAlignment.CENTER
+                                ),
+                                user,
+                                password,
+                                database,
+                                error_text,
+                                ft.Row(
+                                    [
+                                        ft.OutlinedButton("Назад", on_click=lambda e: go_to_screen(db_choice_screen()),
+                                                          expand=True, height=field_height),
+                                        ft.FilledButton("Принять", on_click=on_accept, expand=True,
+                                                        height=field_height),
+                                    ],
+                                    spacing=8
+                                ),
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            spacing=12
+                        ),
                         padding=28,
                         width=card_width,
-                        # height=420,
                         alignment=ft.alignment.center,
                     ),
-                    # elevation=6,
-                    # color=ft.Colors.SURFACE,
-                    # shadow_color=ft.Colors.SHADOW,
-                    # shape=ft.RoundedRectangleBorder(radius=24),
                     alignment=ft.alignment.center,
                     expand=True
                 )
@@ -290,7 +308,6 @@ def app(page: ft.Page):
         password = ft.TextField(label="Пароль", value=history['password'], password=True, can_reveal_password=True,
                                 height=field_height, width=card_width)
         database = ft.TextField(label="База данных", value=history['database'], height=field_height, width=card_width)
-        error_text = ft.Text("", color=ft.Colors.RED, text_align=ft.TextAlign.CENTER, max_lines=8)
 
         def on_accept(e):
             if not all([host.value, port.value, user.value, password.value, database.value]):
