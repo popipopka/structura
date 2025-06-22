@@ -4,7 +4,7 @@ import re
 import uuid
 
 from src.main.persistence import Dialect, Connection
-from src.main.persistence.inspector import DatabaseSchemaInspectorAdapter
+from src.main.persistence.inspector import DatabaseSchemaInspector
 from src.main.visualizer import GraphvizDatabaseSchemaVisualizer
 
 
@@ -42,7 +42,7 @@ def load_connection_history():
 
 def generate_erd_svg(db_url):
     conn = Connection(db_url)
-    inspector = DatabaseSchemaInspectorAdapter(conn)
+    inspector = DatabaseSchemaInspector(conn)
     visualizer = GraphvizDatabaseSchemaVisualizer(inspector.get_tables())
     visualizer.visualize()
     with open("./erd.svg", "r") as f:

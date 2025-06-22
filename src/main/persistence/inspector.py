@@ -7,7 +7,7 @@ from src.main.core import DatabaseSchemaOutputPort, Table, Column, Relation
 from src.main.persistence import Connection
 
 
-class DatabaseSchemaInspectorAdapter(DatabaseSchemaOutputPort):
+class DatabaseSchemaInspector(DatabaseSchemaOutputPort):
     def __init__(self, connection: Connection):
         self.inspector = inspect(connection.engine)
 
