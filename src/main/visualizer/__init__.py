@@ -1,2 +1,2 @@
 from .html_builder import build_table
-from .visualizer import GraphvizDatabaseSchemaVisualizer
+from .visualizer import GraphvizDatabaseSchemaVisualizer, VisualizeState
