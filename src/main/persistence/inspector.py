@@ -15,15 +15,24 @@ class DatabaseSchemaInspector(DatabaseSchemaOutputPort):
         table_names = self.__get_table_names()
 
         tables = []
+        all_relations = []
         for table_name in table_names:
             columns = self.__get_all_columns(table_name)
             relations = self.__get_foreign_keys(table_name)
+            all_relations.extend(relations)
 
             tables.append(Table(
                 name=table_name,
                 columns=columns,
                 relations=relations
             ))
+
+        related_count = {}
+        for relation in all_relations:
+            related_table = relation.related_table_name
+            related_count[related_table] = related_count.get(related_table, 0) + 1
+
+        tables.sort(key=lambda table: related_count.get(table.name, 0))
 
         return tables
 

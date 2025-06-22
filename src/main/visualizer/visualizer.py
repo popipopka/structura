@@ -11,9 +11,10 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
     def __init__(self, tables: List[Table]):
         self.schema = Digraph()
         self.schema.attr("node", shape="plain")
-        self.schema.attr(rankdir="LR")
-        self.schema.attr(nodesep="0.5")
+        self.schema.attr(rankdir="TB")
+        self.schema.attr(nodesep="1.2")
         self.schema.attr(ranksep="0.8")
+        self.schema.attr(TBbalance="max")
 
         self.tables = tables
 
@@ -38,5 +39,9 @@ class GraphvizDatabaseSchemaVisualizer(DatabaseSchemaVisualizer):
         for relation in relations:
             self.schema.edge(
                 tail_name=f"{relation.parent_table_name}:{relation.parent_column_name}",
-                head_name=f"{relation.related_table_name}:{relation.related_column_name}"
+                head_name=f"{relation.related_table_name}:{relation.related_column_name}",
+                arrowsize='0.7',
+                penwidth='0.7',
+                arrowtail='crow',
+                dir='back'
             )
