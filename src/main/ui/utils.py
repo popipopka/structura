@@ -5,7 +5,7 @@ import uuid
 from typing import List, Dict, Optional, Tuple
 
 from src.main.persistence import Dialect, Connection, DatabaseURL
-from src.main.persistence.inspector import DatabaseSchemaInspector
+from src.main.persistence.inspector import SQLAlchemyDatabaseSchemaInspector
 from src.main.visualizer import GraphvizDatabaseSchemaVisualizer
 
 
@@ -43,7 +43,7 @@ def load_connection_history() -> List[Dict]:
 
 def generate_erd_svg(db_url: DatabaseURL, visualize_state: Optional[Dict] = None) -> str:
     conn: Connection = Connection(db_url)
-    inspector: DatabaseSchemaInspector = DatabaseSchemaInspector(conn)
+    inspector: SQLAlchemyDatabaseSchemaInspector = SQLAlchemyDatabaseSchemaInspector(conn)
     visualizer: GraphvizDatabaseSchemaVisualizer = GraphvizDatabaseSchemaVisualizer(inspector.get_tables(), visualize_state)
     visualizer.visualize()
     with open("./erd.svg", "r") as f:

@@ -3,11 +3,11 @@ from typing import List
 from sqlalchemy import inspect
 from sqlalchemy.engine.interfaces import ReflectedColumn, ReflectedForeignKeyConstraint
 
-from src.main.core import DatabaseSchemaOutputPort, Table, Column, Relation
+from src.main.core import DatabaseSchemaInspector, Table, Column, Relation
 from src.main.persistence import Connection
 
 
-class DatabaseSchemaInspector(DatabaseSchemaOutputPort):
+class SQLAlchemyDatabaseSchemaInspector(DatabaseSchemaInspector):
     def __init__(self, connection: Connection):
         self.inspector = inspect(connection.engine)
 

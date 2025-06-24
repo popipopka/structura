@@ -4,7 +4,7 @@ from typing import List
 from src.main.core import Table
 
 
-class DatabaseSchemaOutputPort(ABC):
+class DatabaseSchemaInspector(ABC):
     @abstractmethod
     def get_tables(self) -> List[Table]:
         pass

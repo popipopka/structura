@@ -3,8 +3,8 @@ from typing import Dict, List, Optional, Callable
 
 import flet as ft
 
-from src.main.persistence import DatabaseSchemaInspector
 from src.main.persistence import DatabaseURL, Dialect, Connection
+from src.main.persistence import SQLAlchemyDatabaseSchemaInspector
 from src.main.ui import load_connection_history, DatabaseCard, save_connection_history, ConnectionHistoryCard, \
     generate_erd_svg, get_svg_size, TableVisibilitySelector
 from src.main.visualizer import VisualizeState
@@ -215,7 +215,7 @@ def app(page: ft.Page) -> None:
         nonlocal svg_data
 
         conn: Connection = Connection(current_db_url)
-        inspector: DatabaseSchemaInspector = DatabaseSchemaInspector(conn)
+        inspector: SQLAlchemyDatabaseSchemaInspector = SQLAlchemyDatabaseSchemaInspector(conn)
         tables: List = inspector.get_tables()
         table_names: List[str] = [t.name for t in tables]
         table_states: Dict[str, VisualizeState] = {name: VisualizeState.SHOW for name in table_names}

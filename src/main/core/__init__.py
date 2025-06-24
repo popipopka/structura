@@ -1,2 +1,2 @@
 from .models import Table, Relation, Column
-from .output_ports import DatabaseSchemaOutputPort, DatabaseSchemaVisualizer
+from .output_ports import DatabaseSchemaInspector, DatabaseSchemaVisualizer
